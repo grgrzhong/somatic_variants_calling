@@ -23,8 +23,8 @@ export MODULE_DIR="${PROJECT_DIR}/scripts/modules"
 # Input and output directories
 # export INPUT_DIR="${1:-${PROJECT_DIR}/data/test_data/MFS/RAW}"
 # export OUTPUT_DIR="${2:-${PROJECT_DIR}/data/test_data/MFS}"
-export INPUT_DIR="${1:-${PROJECT_DIR}/data/RAW}"
-export OUTPUT_DIR="${2:-${PROJECT_DIR}/data}"
+export INPUT_DIR="${1:-${PROJECT_DIR}/data/test_data/RAW}"
+export OUTPUT_DIR="${2:-${PROJECT_DIR}/data/test_data}"
 
 mkdir -p "$OUTPUT_DIR" 
 
