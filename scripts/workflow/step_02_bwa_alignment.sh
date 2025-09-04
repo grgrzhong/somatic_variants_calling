@@ -25,10 +25,16 @@ bwa_mapping() {
 
     # Create the output directory for the sample
     mkdir -p "${BAM_DIR}/${sample}"
-
+    
+    log_dir="${BAM_DIR}/${sample}/logs"
+    
+    mkdir -p "${log_dir}"
+    
     # BWA Alignment
-    echo "$(date +"%F") $(date +"%T") - (${sample}) Aligning to reference genome ..."
-
+    echo "$(date +"%F") $(date +"%T") - (${sample}) BWA alignment ..."
+    
+    bwa_log="${log_dir}/${sample}.bwa.log"
+    
     singularity exec \
         --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
         --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
@@ -38,16 +44,12 @@ bwa_mapping() {
         "${CONTAINER_DIR}/bwa.sif" \
         bwa mem \
         -M \
-        -t 8 \
+        -t 16 \
         -R "@RG\tID:${sample}\tLB:XGenV2\tPL:ILLUMINA\tPM:NOVASEQ\tSM:${sample}\tPU:NA" \
         "${REFERENCE}" \
         "${fastq_1}" \
-        "${fastq_2}" >"${BAM_DIR}/${sample}/${sample}.bwa.sam"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: BWA alignment failed for ${sample}"
-        return 1
-    fi
+        "${fastq_2}" > "${BAM_DIR}/${sample}/${sample}.bwa.sam" \
+        2>> "${bwa_log}"
 
     # Convert SAM to BAM
     echo "$(date +"%F") $(date +"%T") - (${sample}) Converting SAM to BAM ..."
@@ -59,12 +61,8 @@ bwa_mapping() {
         "${CONTAINER_DIR}/samtools.sif" \
         samtools \
         view \
+        -@ 8 \
         -Sb "${BAM_DIR}/${sample}/${sample}.bwa.sam" >"${BAM_DIR}/${sample}/${sample}.bwa.bam"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: SAM to BAM conversion failed for ${sample}"
-        return 1
-    fi
 
     # Extract and tag UMI
     echo "$(date +"%F") $(date +"%T") - (${sample}) Extract and tag UMI ..."
@@ -78,13 +76,8 @@ bwa_mapping() {
         -I "${BAM_DIR}/${sample}/${sample}.bwa.bam" \
         -O "${BAM_DIR}/${sample}/${sample}.umi.bam"
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: UMI tagging failed for ${sample}"
-        return 1
-    fi
-
     # Sort by coordinate
-    echo "$(date +"%F") $(date +"%T") - (${sample}) Sorting BAM file ..."
+    echo "$(date +"%F") $(date +"%T") - (${sample}) Sorting UMI BAM ..."
     singularity exec \
         --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
         --bind "${BAM_DIR}:${BAM_DIR}" \
@@ -92,12 +85,8 @@ bwa_mapping() {
         "${CONTAINER_DIR}/samtools.sif" \
         samtools sort \
             "${BAM_DIR}/${sample}/${sample}.umi.bam" \
-            -o "${BAM_DIR}/${sample}/${sample}.sorted.bam"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: BAM sorting failed for ${sample}"
-        return 1
-    fi
+            -o "${BAM_DIR}/${sample}/${sample}.sorted.bam" \
+            >& "${log_dir}/${sample}.SortByCoordinate.log"
 
     # Mark duplicates
     echo "$(date +"%F") $(date +"%T") - (${sample}) Marking duplicates ..."
@@ -105,17 +94,13 @@ bwa_mapping() {
         --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
         --bind "${BAM_DIR}:${BAM_DIR}" \
         --bind /tmp:/tmp \
-        "${CONTAINER_DIR}/gatk.sif" \
+        "${CONTAINER_DIR}/gatk4.sif" \
         gatk --java-options "-Xmx4g" MarkDuplicates \
         -I "${BAM_DIR}/${sample}/${sample}.sorted.bam" \
-        -M "${BAM_DIR}/${sample}/${sample}.metrics.txt" \
+        -M "${BAM_DIR}/${sample}/${sample}_metrics.txt" \
         -O "${BAM_DIR}/${sample}/${sample}.marked.bam" \
-        --BARCODE_TAG "RX"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Marking duplicates failed for ${sample}"
-        return 1
-    fi
+        --BARCODE_TAG "RX" \
+        >& "${log_dir}/${sample}.MarkDuplicates.log"
 
     # Index BAM
     echo "$(date +"%F") $(date +"%T") - (${sample}) Indexing BAM file ..."
@@ -126,67 +111,53 @@ bwa_mapping() {
         "${CONTAINER_DIR}/samtools.sif" \
         samtools index "${BAM_DIR}/${sample}/${sample}.marked.bam"
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: BAM indexing failed for ${sample}"
-        return 1
-    fi
-
     # Base recalibration
-    echo "$(date +"%F") $(date +"%T") - (${sample}) Running base recalibration ..."
+    echo "$(date +"%F") $(date +"%T") - (${sample}) Base recalibration ..."
     singularity exec \
         --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
+        --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
         --bind "${BAM_DIR}:${BAM_DIR}" \
         --bind /tmp:/tmp \
-        "${CONTAINER_DIR}/gatk.sif" \
+        "${CONTAINER_DIR}/gatk4.sif" \
         gatk BaseRecalibrator \
         -I "${BAM_DIR}/${sample}/${sample}.marked.bam" \
         -R "${REFERENCE}" \
         -L "${INTERVAL}" \
-        -O "${BAM_DIR}/${sample}/${sample}.recal.table" \
-        --known-sites "${DBSNP}"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Base recalibration failed for ${sample}"
-        return 1
-    fi
+        -O "${BAM_DIR}/${sample}/${sample}_recal_table.table" \
+        --known-sites "${DBSNP}" \
+        >& "${log_dir}/${sample}.BaseRecalibrator.log"
 
     # Apply BQSR
     echo "$(date +"%F") $(date +"%T") - (${sample}) Applying BQSR ..."
     singularity exec \
         --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
+        --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
         --bind "${BAM_DIR}:${BAM_DIR}" \
         --bind /tmp:/tmp \
-        "${CONTAINER_DIR}/gatk.sif" \
+        "${CONTAINER_DIR}/gatk4.sif" \
         gatk ApplyBQSR \
             -I "${BAM_DIR}/${sample}/${sample}.marked.bam" \
-            -O "${BAM_DIR}/${sample}/${sample}.recal.bam" \
+            -O "${BAM_DIR}/${sample}/${sample}_recalibrated.bam" \
             -L "${INTERVAL}" \
-            -bqsr "${BAM_DIR}/${sample}/${sample}.recal.table" \
-            --create-output-bam-md5
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Applying BQSR failed for ${sample}"
-        return 1
-    fi
+            -bqsr "${BAM_DIR}/${sample}/${sample}_recal_table.table" \
+            --create-output-bam-md5 \
+            >& "${log_dir}/${sample}.ApplyBQSR.log"
 
     # Collect HS metrics
     echo "$(date +"%F") $(date +"%T") - (${sample}) Collecting HsMetrics ..."
     singularity exec \
         --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
+        --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
         --bind "${BAM_DIR}:${BAM_DIR}" \
         --bind /tmp:/tmp \
-        "${CONTAINER_DIR}/gatk.sif" \
+        "${CONTAINER_DIR}/gatk4.sif" \
         gatk CollectHsMetrics \
-            -I "${BAM_DIR}/${sample}/${sample}.recal.bam" \
-            -O "${BAM_DIR}/${sample}/${sample}.hsmetrics.txt" \
+            -I "${BAM_DIR}/${sample}/${sample}_recalibrated.bam" \
+            -O "${BAM_DIR}/${sample}/${sample}_hs_metrics.txt" \
             -R "${REFERENCE}" \
             -BI "${BAIT_INTERVAL}" \
-            -TI "${TARGET_INTERVAL}"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Collecting HsMetrics failed for ${sample}"
-        return 1
-    fi
+            -TI "${TARGET_INTERVAL}" \
+            >& "${log_dir}/${sample}.CollectHsMetrics.log"
 
     # Generate alignment stats
     echo "$(date +"%F") $(date +"%T") - (${sample}) Generating alignment stats ..."
@@ -197,23 +168,16 @@ bwa_mapping() {
         --bind /tmp:/tmp \
         "${CONTAINER_DIR}/bamtools.sif" \
         bamtools stats \
-        -in "${BAM_DIR}/${sample}/${sample}.recal.bam" \
-        -out "${BAM_DIR}/${sample}/${sample}.stats.txt"
+        -in "${BAM_DIR}/${sample}/${sample}_recalibrated.bam" > "${BAM_DIR}/${sample}/${sample}_aln_stat.txt"
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Generating alignment stats failed for ${sample}"
-        return 1
-    fi
-
-    # Clean up intermediate files
+    # Clean up intermediate files to save disk space
     echo "$(date +"%F") $(date +"%T") - (${sample}) Cleaning up intermediate files ..."
-    rm -f  \
-        "${BAM_DIR}/${sample}/${sample}.bwa.sam" \
-        "${BAM_DIR}/${sample}/${sample}.bwa.bam" \
-        "${BAM_DIR}/${sample}/${sample}.umi.bam" \
-        "${BAM_DIR}/${sample}/${sample}.sorted.bam" \
-        "${BAM_DIR}/${sample}/${sample}.marked.bam" \
-        "${BAM_DIR}/${sample}/${sample}.marked.bam.bai"
+    # rm -rf "${BAM_DIR}/${sample}/${sample}.bwa.sam" 
+    # rm -rf "${BAM_DIR}/${sample}/${sample}.bwa.bam"
+    # rm -rf "${BAM_DIR}/${sample}/${sample}.umi.bam"
+    # rm -rf "${BAM_DIR}/${sample}/${sample}.sorted.bam"
+    # rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam"
+    # rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam.bai"
 }
 
 # Export function to make it available to GNU parallel

@@ -1,19 +1,17 @@
 #!/bin/bash
 
 ###############################################################################
-## PCGR annotation reference (https://sigven.github.io/pcgr/index.html)
+## Adapted from PCGR annotation reference (https://sigven.github.io/pcgr/index.html)
 ## Authors: Zhong Guorui
 ## Date: 2025-06-10
-## Description: This script was adapted from "M:\Scripts\DNA analysis\PCGR_annotate.sh"
 ## Key features: 
 ##      1. Added prallelization to run PCGR annotation for multiple samples; 
 ##      2. Use singularity container to keep the environment consistent;
 ###############################################################################
 
-source "$(dirname "${BASH_SOURCE[0]}")/conf/config.sh"
-
 ## Create the output directory
 mkdir -p "${PCGR_DIR}"
+export COPY_GAIN_THRESHOLD=3
 
 ## ===========================================================================
 ## General configurations
@@ -42,7 +40,6 @@ fi
 # bcftools view -h "${PON_PCGR}" | head -20
 # bcftools view -h "${PON_PCGR}" | grep -i "^#CHROM"
 # bcftools view -h "${PON}" | grep -i "^##"
-
 
 ## Function to run PCGR annotation
 pcgr_annotation() {
@@ -119,7 +116,7 @@ pcgr_annotation() {
             --genome_assembly grch38 \
             --sample_id "${tumour_id}" \
             --assay WES \
-            --n_copy_gain 3 \
+            --n_copy_gain "${COPY_GAIN_THRESHOLD}" \
             --effective_target_size_mb 34 \
             --tumor_dp_tag TDP \
             --tumor_af_tag TAF \
@@ -185,7 +182,7 @@ pcgr_annotation() {
                 --genome_assembly grch38 \
                 --sample_id "${tumour_id}" \
                 --assay WES \
-                --n_copy_gain 3 \
+                --n_copy_gain "${COPY_GAIN_THRESHOLD}" \
                 --effective_target_size_mb 34 \
                 --tumor_only \
                 --tumor_dp_tag TDP \

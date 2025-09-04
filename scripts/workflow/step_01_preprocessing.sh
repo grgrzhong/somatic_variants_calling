@@ -42,12 +42,7 @@ preprocess() {
         -j "${FASTQ_TRIM_DIR}/${sample}/${sample}.json" \
         -h "${FASTQ_TRIM_DIR}/${sample}/${sample}.html" \
         -w 2 \
-        2>"${FASTQ_TRIM_DIR}/${sample}/${sample}.fastp.log"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: fastp trimming failed for ${sample}"
-        return 1
-    fi
+        >& "${FASTQ_TRIM_DIR}/${sample}/${sample}.fastp.log"
 
     ## FastQC on trimmed fastq files
     echo "$(date +"%F") $(date +"%T") - (${sample}) Running FastQC on trimmed fastq files ..."
@@ -65,11 +60,7 @@ preprocess() {
         --memory 4096 \
         -t 4 \
         >& "${FASTQC_TRIM_DIR}/${sample}/${sample}.fastqc.log"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: Fastp trimming failed for ${sample}" >&2
-        return 1
-    fi
+        
 }
 
 # Export function to make it available to GNU parallel

@@ -1,6 +1,6 @@
 # Somatic Variants Calling Pipeline
 
-This comprehensive pipeline performs somatic variant calling from paired-end DNA sequencing data (tumor-normal or tumor-only). It processes FASTQ files through quality control, alignment, somatic mutation calling, copy number variation analysis, and clinical annotation.
+This pipeline performs somatic variant calling from paired-end DNA sequencing data (tumor-normal or tumor-only). It processes FASTQ files through quality control, alignment, somatic mutation calling, copy number variation analysis, and clinical annotation.
 
 ## Overview
 
@@ -8,7 +8,7 @@ The Somatic Variants Calling Pipeline includes the following main steps:
 1. **Preprocessing & QC**: Quality control (FastQC) and adapter trimming with UMI extraction (fastp)
 2. **BWA Alignment**: BWA-MEM alignment, UMI tagging, duplicate marking, and base quality recalibration
 3. **Mutect2 Variant Calling**: GATK Mutect2 somatic variant calling with filtering and normalization
-4. **CNV Analysis**: Copy number variation detection using FACETS
+4. **CNV Analysis**: Allel specific copy number variation detection using FACETS
 5. **Clinical Annotation**: Variant annotation using PCGR (Personal Cancer Genome Reporter)
 
 ## Installation
@@ -44,8 +44,6 @@ conda activate somatic_calling
 ### Step 3: Download and Setup the Pipeline
 
 ```bash
-# Clone the repository
-git clone https://github.com/grgrzhong/somatic_variants_calling.git
 cd somatic_variants_calling
 
 # Make the pipeline scripts executable
@@ -63,7 +61,7 @@ The pipeline consists of 5 main steps executed sequentially:
 | 2 | `step_02_bwa_alignment.sh` | BWA alignment, UMI tagging, sorting, duplicate marking, BQSR | BWA, GATK, SAMtools |
 | 3 | `step_03_mutect2_call.sh` | Somatic variant calling, filtering, and normalization | GATK Mutect2, BCFtools |
 | 4 | `step_04_cnv_facets.sh` | Copy number variation analysis | FACETS |
-| 5 | `step_05_pcgr.sh` | Clinical variant annotation and reporting | PCGR, VEP |
+| 5 | `step_05_pcgr_annotation.sh` | Clinical variant annotation and reporting | PCGR, VEP |
 
 ## Configuration
 

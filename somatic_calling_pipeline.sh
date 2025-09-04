@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=somatic_mutation_pipeline
+#SBATCH --job-name=somatic_variants_calling
 #SBATCH --partition=amd
 #SBATCH --time=48:00:00
 #SBATCH --qos=normal
@@ -7,13 +7,35 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem-per-cpu=4G
-#SBATCH --output=/home/zhonggr/projects/somatic_calling_pipeline/slurm/%x_%j.out
-#SBATCH --error=/home/zhonggr/projects/somatic_calling_pipeline/slurm/%x_%j.err
+#SBATCH --output=/lustre1/g/path_my/pipeline/somatic_variants_calling/slurm/%x_%j.out
+#SBATCH --error=/lustre1/g/path_my/pipeline/somatic_variants_calling/slurm/%x_%j.err
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=zhonggr@hku.hk
 
+###############################################################################
+## Authors: Zhong Guorui
+## Date: 2025-06-10
+## Description: Somatic variants calling workflow using BWA, GATK, FACETS and PCGR
+## Key features:
+##      1. Added parallelization to run each steps for multiple samples;
+##      2. Use singularity container to keep the environment consistent;
+##      3. Only need to install parallel and apptainer
+###############################################################################
+
+# Determine the script directory - works both locally and on SLURM
+if [[ -n "${SLURM_JOB_ID:-}" ]]; then
+    # Running on SLURM - use the submit directory
+    PIPELINE_DIR="${SLURM_SUBMIT_DIR}"
+else
+    # Running locally - use the directory containing this script
+    PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
 # Load configuration
-source "$(dirname "${BASH_SOURCE[0]}")/conf/config.sh"
+source "${PIPELINE_DIR}/conf/config.sh" "$@"
+
+# # Load configuration
+# source "$(dirname "${BASH_SOURCE[0]}")/conf/config.sh"
 
 # Add better error handling
 set -e  # Exit on any error
@@ -27,23 +49,23 @@ echo "======================================================================="
 echo "Somatic variants calling Workflow - Pipeline"
 echo "======================================================================="
 
-# # Step 1: Preprocessing
-# echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC ..."
-# bash "${PROJECT_DIR}/scripts/workflow/step_01_preprocessing.sh"
-# if [ $? -ne 0 ]; then
-#     echo "✗ Error: Preprocessing steps failed. Exiting pipeline."
-#     exit 1
-# fi
-# echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC (✓) "
+# Step 1: Preprocessing
+echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC ..."
+bash "${PROJECT_DIR}/scripts/workflow/step_01_preprocessing.sh"
+if [ $? -ne 0 ]; then
+    echo "✗ Error: Preprocessing steps failed. Exiting pipeline."
+    exit 1
+fi
+echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC (✓) "
 
-# # Step 2: BWA alignment
-# echo "$(date +"%F") $(date +"%T") Step 2: BWA-mem alignment ..."
-# bash "${PROJECT_DIR}/scripts/workflow/step_02_bwa_alignment.sh"
-# if [ $? -ne 0 ]; then
-#     echo "✗ Error: BWA alignment steps failed. Exiting pipeline."
-#     exit 1
-# fi
-# echo "$(date +"%F") $(date +"%T") Step 2: BWA alignment (✓) "
+# Step 2: BWA alignment
+echo "$(date +"%F") $(date +"%T") Step 2: BWA-mem alignment ..."
+bash "${PROJECT_DIR}/scripts/workflow/step_02_bwa_alignment.sh"
+if [ $? -ne 0 ]; then
+    echo "✗ Error: BWA alignment steps failed. Exiting pipeline."
+    exit 1
+fi
+echo "$(date +"%F") $(date +"%T") Step 2: BWA alignment (✓) "
 
 # Step 3: Mutect2 call
 echo "$(date +"%F") $(date +"%T") Step 3: Mutect2 calling ..."

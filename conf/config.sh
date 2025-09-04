@@ -20,11 +20,10 @@ export PROJECT_DIR
 
 # Module directory containing scripts for processing data
 export MODULE_DIR="${PROJECT_DIR}/scripts/modules"
+
 # Input and output directories
-# export INPUT_DIR="${1:-${PROJECT_DIR}/data/test_data/MFS/RAW}"
-# export OUTPUT_DIR="${2:-${PROJECT_DIR}/data/test_data/MFS}"
 export INPUT_DIR="${1:-${PROJECT_DIR}/data/test_data/RAW}"
-export OUTPUT_DIR="${2:-${PROJECT_DIR}/data/test_data}"
+export OUTPUT_DIR="${2:-${PROJECT_DIR}/results}"
 
 mkdir -p "$OUTPUT_DIR" 
 
@@ -50,7 +49,6 @@ export PON_DIR="${REFERENCE_DIR}/PON-Mutect"
 export PON="${PON_DIR}/pon.vcf.gz"
 
 export REFERENCE="${REFERENCE_DIR}/Gencode/gencode.hg38.v36.primary_assembly.fa"
-export INTERVAL="${REFERENCE_DIR}/Exome/xgen-exome-hyb-panel-v2-hg38_200bp_sorted_merged/xgen-exome-hyb-panel-v2-hg38_200bp_sorted_merged.bed"
 export GERMLINE="${REFERENCE_DIR}/Population_database/somatic-hg38_af-only-gnomad.hg38.vcf.gz"
 
 export PCGR_DIR="${OUTPUT_DIR}/PCGR"
@@ -62,6 +60,7 @@ export FUNOCATOR_ANNOTATION_FILE="${REFERENCE_DIR}/Funocator_Datasource/funcotat
 export ANNOTATION="${REFERENCE_DIR}/Gencode/annotation_protein_coding.bed"
 
 export DBSNP="${REFERENCE_DIR}/Population_database/dbSNP.vcf.gz"
+export INTERVAL="${REFERENCE_DIR}/Exome/xgen-exome-hyb-panel-v2-hg38_200bp_sorted_merged/xgen-exome-hyb-panel-v2-hg38_200bp_sorted_merged.bed"
 export BAIT_INTERVALS="${REFERENCE_DIR}/Exome/xgen-exome-hyb-panel-v2/hg38/xgen-exome-hyb-panel-v2-probes-hg38.interval_list"
 export TARGET_INTERVALS="${REFERENCE_DIR}/Exome/xgen-exome-hyb-panel-v2/hg38/xgen-exome-hyb-panel-v2-targets-hg38.interval_list"
 

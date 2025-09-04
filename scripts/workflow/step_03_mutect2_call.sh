@@ -40,11 +40,6 @@ mutect2_call() {
             -O "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.getpileupsummaries.table" \
             >& "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.getpileupsummaries.log"
 
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: GetPileupSummaries failed for ${tumour_id}"
-        return 1
-    fi
-
     # Get Pileup Summaries if presence of paired normal samples
     if [ -d "${BAM_DIR}/${normal_id}" ]; then
         echo "$(date +"%F") $(date +"%T") - (${normal_id}) Getting Pileup Summaries ..."
@@ -63,10 +58,6 @@ mutect2_call() {
             -O "${MUTECT2_DIR}/${tumour_id}/${normal_id}.getpileupsummaries.table" \
             >& "${MUTECT2_DIR}/${tumour_id}/${normal_id}.getpileupsummaries.log"
 
-        if [[ $? -ne 0 ]]; then
-            echo "ERROR: GetPileupSummaries failed for ${normal_id}"
-            return 1
-        fi
     fi
 
     ## ====================================================================
@@ -89,11 +80,6 @@ mutect2_call() {
                 -segments "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.segments.table" \
                 >& "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.contamination.log"
 
-        if [[ $? -ne 0 ]]; then
-            echo "ERROR: CalculateContamination failed for ${tumour_id}_vs_${normal_id}"
-            return 1
-        fi
-
     else
         # Calculate contamination based on tumour samples only
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Calculating contamination of unmatched samples ..."
@@ -109,10 +95,6 @@ mutect2_call() {
                 -segments "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.segments.table" \
                 >& "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.contamination.log"
 
-        if [[ $? -ne 0 ]]; then
-            echo "ERROR: CalculateContamination failed for ${tumour_id}"
-            return 1
-        fi
     fi
 
     ## ====================================================================
@@ -145,11 +127,6 @@ mutect2_call() {
                 -bamout "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.realigned.bam" \
                 >& "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.mutect2.log"
 
-        if [[ $? -ne 0 ]]; then
-            echo "ERROR: Mutect2 failed for ${tumour_id}_vs_${normal_id}" >&2
-            return 1
-        fi
-
     else
         ## Mutect2 call variant on unpaired tumour samples
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Mutect2 call on unmatched samples ..."
@@ -173,10 +150,6 @@ mutect2_call() {
                 -bamout "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.realigned.bam" \
                 >& "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.mutect2.log"
 
-        if [[ $? -ne 0 ]]; then
-            echo "ERROR: Mutect2 failed for ${tumour_id}" >&2
-            return 1
-        fi
     fi
 
     ## ====================================================================
@@ -193,11 +166,6 @@ mutect2_call() {
             -I "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.f1r2.tar.gz" \
             -O "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.readorientationmodel.tar.gz" \
             >& "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.learnreadorientationmodel.log"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: LearnReadOrientationModel failed for ${tumour_id}" >&2
-        return 1
-    fi
 
     ## ====================================================================
     ## Step5. Learn Read Orientation Model bias for artifacts
@@ -221,11 +189,6 @@ mutect2_call() {
             --unique-alt-read-count 1 \
             --output "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.filtermutectcalls.vcf.gz" \
             >& "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.filtermutectcalls.log"
-
-    if [[ $? -ne 0 ]]; then
-        echo "ERROR: FilterMutectCalls failed for ${tumour_id}" >&2
-        return 1
-    fi
 
     ## ====================================================================
     ## Step6. Normalize the variants

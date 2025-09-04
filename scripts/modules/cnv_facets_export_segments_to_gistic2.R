@@ -76,9 +76,9 @@ if (length(missing_cols) > 0) {
 
 ## Convert to custom format, filtering out neutral segments
 output_tsv <- input_tsv |> 
-            filter(SVTYPE != "NEUTR") |> 
+            # filter(SVTYPE != "NEUTR") |> 
             ## The not estimateable Lesser (minor) copy number segments were filtered out
-            dplyr::filter(!(LCN_EM %in% c(".", NA, "NA"))) |>
+            # dplyr::filter(!(LCN_EM %in% c(".", NA, "NA"))) |>
             dplyr::select(all_of(required_input_cols)) |> 
             dplyr::rename(
                 Chromosome = CHROM,
