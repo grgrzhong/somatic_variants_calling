@@ -155,8 +155,8 @@ bwa_mapping() {
             -I "${BAM_DIR}/${sample}/${sample}_recalibrated.bam" \
             -O "${BAM_DIR}/${sample}/${sample}_hs_metrics.txt" \
             -R "${REFERENCE}" \
-            -BI "${BAIT_INTERVAL}" \
-            -TI "${TARGET_INTERVAL}" \
+            -BI "${BAIT_INTERVALS}" \
+            -TI "${TARGET_INTERVALS}" \
             >& "${log_dir}/${sample}.CollectHsMetrics.log"
 
     # Generate alignment stats
