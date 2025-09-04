@@ -172,12 +172,14 @@ bwa_mapping() {
 
     # Clean up intermediate files to save disk space
     echo "$(date +"%F") $(date +"%T") - (${sample}) Cleaning up intermediate files ..."
-    # rm -rf "${BAM_DIR}/${sample}/${sample}.bwa.sam" 
-    # rm -rf "${BAM_DIR}/${sample}/${sample}.bwa.bam"
-    # rm -rf "${BAM_DIR}/${sample}/${sample}.umi.bam"
-    # rm -rf "${BAM_DIR}/${sample}/${sample}.sorted.bam"
-    # rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam"
-    # rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam.bai"
+
+    rm -rf "${BAM_DIR}/${sample}/${sample}.bwa.sam" 
+    rm -rf "${BAM_DIR}/${sample}/${sample}.bwa.bam"
+    rm -rf "${BAM_DIR}/${sample}/${sample}.umi.bam"
+    rm -rf "${BAM_DIR}/${sample}/${sample}.sorted.bam"
+    rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam"
+    rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam.bai"
+    rm -rf "${BAM_DIR}/${sample}/${sample}_recalibrated.bam.md5"
 }
 
 # Export function to make it available to GNU parallel
