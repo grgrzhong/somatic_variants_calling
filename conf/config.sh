@@ -23,7 +23,7 @@ export MODULE_DIR="${PROJECT_DIR}/scripts/modules"
 
 # Input and output directories
 export INPUT_DIR="${1:-${PROJECT_DIR}/data/test_data/RAW}"
-export OUTPUT_DIR="${2:-${PROJECT_DIR}/results}"
+export OUTPUT_DIR="${2:-${PROJECT_DIR}/data/test_data}"
 
 mkdir -p "$OUTPUT_DIR" 
 
@@ -42,8 +42,8 @@ export CNV_DIR="${OUTPUT_DIR}/CNV"
 export CNV_FACETS_DIR="${CNV_DIR}/cnv_facets"
 
 # Reference and annotation directories
-export REFERENCE_DIR="${5:-/mnt/f/Reference}"
-export CONTAINER_DIR="${6:-${PROJECT_DIR}}/containers"
+export REFERENCE_DIR="${4:-/mnt/f/Reference}"
+export CONTAINER_DIR="${5:-${PROJECT_DIR}}/containers"
 
 export PON_DIR="${REFERENCE_DIR}/PON-Mutect"
 export PON="${PON_DIR}/pon.vcf.gz"
