@@ -59,13 +59,6 @@ pcgr_annotation() {
         return 1
     fi
     
-    input_cna="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.pcgr.tsv"
-
-    if [ ! -f "${input_cna}" ]; then
-        echo "Input CNA file not found: ${input_cna}"
-        return 1
-    fi
-
     ## Create output directory
     output_dir="${PCGR_DIR}/${tumour_id}"
     mkdir -p "${output_dir}"
@@ -79,6 +72,13 @@ pcgr_annotation() {
     if [ -d "${BAM_DIR}/${normal_id}" ]; then
 
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) PCGR tumour-normal mode ..."
+
+        input_cna="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.pcgr.tsv"
+
+        if [ ! -f "${input_cna}" ]; then
+            echo "Input CNA file not found: ${input_cna}"
+            return 1
+        fi
 
         ## Reformat VCF 
         singularity exec \
@@ -174,7 +174,6 @@ pcgr_annotation() {
             "${CONTAINER_DIR}/pcgr_2.2.3.singularity.sif" \
             pcgr \
                 --input_vcf "${reformatted_vcf}" \
-                --input_cna "${input_cna}" \
                 --pon_vcf "${PON_PCGR}" \
                 --vep_dir "${VEP_CACHE}" \
                 --refdata_dir "${PCGR_REFERENCE}" \

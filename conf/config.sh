@@ -47,6 +47,7 @@ export CONTAINER_DIR="${5:-${PROJECT_DIR}}/containers"
 
 export PON_DIR="${REFERENCE_DIR}/PON-Mutect"
 export PON="${PON_DIR}/pon.vcf.gz"
+export PON_PCGR="${PON_DIR}/pon_pcgr.vcf.gz"
 
 export REFERENCE="${REFERENCE_DIR}/Gencode/gencode.hg38.v36.primary_assembly.fa"
 export GERMLINE="${REFERENCE_DIR}/Population_database/somatic-hg38_af-only-gnomad.hg38.vcf.gz"
@@ -54,7 +55,6 @@ export GERMLINE="${REFERENCE_DIR}/Population_database/somatic-hg38_af-only-gnoma
 export PCGR_DIR="${OUTPUT_DIR}/PCGR"
 export PCGR_REFERENCE="${REFERENCE_DIR}/PCGR_reference/20250314"
 export VEP_CACHE="${REFERENCE_DIR}/VEP_cache"
-export PON_PCGR="${PON_DIR}/pon_pcgr.vcf.gz"
 
 export FUNOCATOR_ANNOTATION_FILE="${REFERENCE_DIR}/Funocator_Datasource/funcotator_dataSources.v1.7.20200521s/"
 export ANNOTATION="${REFERENCE_DIR}/Gencode/annotation_protein_coding.bed"

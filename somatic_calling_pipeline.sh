@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=somatic_variants_calling
 #SBATCH --partition=amd
-#SBATCH --time=48:00:00
+#SBATCH --time=148:00:00
 #SBATCH --qos=normal
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -50,22 +50,22 @@ echo "Somatic variants calling Workflow - Pipeline"
 echo "======================================================================="
 
 # Step 1: Preprocessing
-echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC ..."
-bash "${PROJECT_DIR}/scripts/workflow/step_01_preprocessing.sh"
-if [ $? -ne 0 ]; then
-    echo "✗ Error: Preprocessing steps failed. Exiting pipeline."
-    exit 1
-fi
-echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC (✓) "
+# echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC ..."
+# bash "${PROJECT_DIR}/scripts/workflow/step_01_preprocessing.sh"
+# if [ $? -ne 0 ]; then
+#     echo "✗ Error: Preprocessing steps failed. Exiting pipeline."
+#     exit 1
+# fi
+# echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC (✓) "
 
-# Step 2: BWA alignment
-echo "$(date +"%F") $(date +"%T") Step 2: BWA-mem alignment ..."
-bash "${PROJECT_DIR}/scripts/workflow/step_02_bwa_alignment.sh"
-if [ $? -ne 0 ]; then
-    echo "✗ Error: BWA alignment steps failed. Exiting pipeline."
-    exit 1
-fi
-echo "$(date +"%F") $(date +"%T") Step 2: BWA alignment (✓) "
+# # Step 2: BWA alignment
+# echo "$(date +"%F") $(date +"%T") Step 2: BWA-mem alignment ..."
+# bash "${PROJECT_DIR}/scripts/workflow/step_02_bwa_alignment.sh"
+# if [ $? -ne 0 ]; then
+#     echo "✗ Error: BWA alignment steps failed. Exiting pipeline."
+#     exit 1
+# fi
+# echo "$(date +"%F") $(date +"%T") Step 2: BWA alignment (✓) "
 
 # Step 3: Mutect2 call
 echo "$(date +"%F") $(date +"%T") Step 3: Mutect2 calling ..."
