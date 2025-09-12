@@ -8,8 +8,8 @@
 #############################################################################
 
 # Activate conda environment
-source $(conda info --base)/etc/profile.d/conda.sh
-conda activate apptainer
+# source $(conda info --base)/etc/profile.d/conda.sh
+# conda activate apptainer
 
 # Exit on any error
 # set -e

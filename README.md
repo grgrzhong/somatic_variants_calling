@@ -33,12 +33,11 @@ source ~/.bashrc
 conda --version
 ```
 
-### Step 2: Create Environment
+### Step 2: Install required software
 
 ```bash
 # Create environment with required tools
-conda create -n somatic_calling apptainer parallel
-conda activate somatic_calling
+conda install apptainer parallel
 ```
 
 ### Step 3: Download and Setup the Pipeline
