@@ -1,9 +1,8 @@
 #!/bin/bash
 
 #############################################################################
-# Somatic Mutation Workflow - BWA Alignment Script
-# This script performs BWA alignment, UMI tagging, sorting, marking duplicates,
-# base recalibration, and collects alignment statistics.
+## Somatic Mutation Workflow - BWA Alignment Script
+## Author:  Zhong Guorui
 #############################################################################
 
 # Create the output directories if they do not exist
@@ -189,7 +188,4 @@ export -f bwa_mapping
 samples=$(find "${FASTQ_TRIM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
 # Process samples in parallel
-echo "$samples" |
-    parallel \
-        --jobs "$PARALLEL_JOBS" \
-        bwa_mapping {}
+echo "$samples" | parallel --jobs "$PARALLEL_JOBS" bwa_mapping {}

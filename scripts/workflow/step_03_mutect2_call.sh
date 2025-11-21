@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #############################################################################
-# Somatic Mutation Workflow - Mutect2 calling
-# This script performs Mutect2 variant calling, filtering, and annotation.
+## Somatic Mutation Workflow - Mutect2 calling
+## Author:  Zhong Guorui
 #############################################################################
 
 # Create the output directories if they do not exist
@@ -313,10 +313,7 @@ echo -e "##INFO=<ID=EncodeDacMapability,Number=1,Type=String,Description=\"Encod
 ## tumour sample list
 tumour_samples=$(find "${BAM_DIR}" -mindepth 1 -maxdepth 1 -type d -name "*T*" -print0 | xargs -0 -n 1 basename)
 
-echo "${tumour_samples}" |
-    parallel \
-    --jobs "${PARALLEL_JOBS}" \
-    mutect2_call {}
+echo "${tumour_samples}" | parallel --jobs "${PARALLEL_JOBS}" mutect2_call {}
 
 # Clean up temporary header files
 rm "${MUTECT2_DIR}/vcf.rm.header"

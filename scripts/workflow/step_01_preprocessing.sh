@@ -1,8 +1,9 @@
 #!/bin/bash
 
 #############################################################################
-# Somatic Mutation Workflow - Preprocessing Script
-# This script performs adaptors trimming, and fastq quality control.
+## Somatic Mutation Workflow - Preprocessing Script
+## Author:  Zhong Guorui
+## This script performs adaptors trimming, and fastq quality control.
 #############################################################################
 
 # Create the output directories if they do not exist
@@ -73,7 +74,4 @@ samples=$(find "${INPUT_DIR}" -name "*.fastq.gz" |
     xargs -n1 basename)
 
 # Process samples in parallel
-echo "$samples" | 
-    parallel \
-    --jobs "$PARALLEL_JOBS" \
-    preprocess {}
+echo "$samples" | parallel --jobs "$PARALLEL_JOBS" preprocess {}

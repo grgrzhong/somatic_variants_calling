@@ -106,7 +106,7 @@ pcgr_annotation() {
             --bind "${VEP_CACHE}:${VEP_CACHE}" \
             --bind "${output_dir}:${output_dir}" \
             --bind "${PCGR_DIR}:${PCGR_DIR}" \
-            "${CONTAINER_DIR}/pcgr_2.2.3.singularity.sif" \
+            "${CONTAINER_DIR}/pcgr.sif" \
             pcgr \
             --input_vcf "${reformatted_vcf}" \
             --input_cna "${input_cna}" \
@@ -171,7 +171,7 @@ pcgr_annotation() {
             --bind "${PCGR_DIR}:${PCGR_DIR}" \
             --bind "${PON_DIR}:${PON_DIR}" \
             --bind "/tmp:/tmp" \
-            "${CONTAINER_DIR}/pcgr_2.2.3.singularity.sif" \
+            "${CONTAINER_DIR}/pcgr.sif" \
             pcgr \
                 --input_vcf "${reformatted_vcf}" \
                 --pon_vcf "${PON_PCGR}" \
@@ -206,9 +206,6 @@ export -f pcgr_annotation
 ## Run PCGR annotation for each tumour samples
 tumour_ids=$(find "${BAM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | grep "T" | sort)
 
-export PARALLEL_JOBS=20
+# export PARALLEL_JOBS=20
 
-echo "${tumour_ids}" | parallel \
-    --jobs "$PARALLEL_JOBS" \
-    pcgr_annotation {}
-    
+echo "${tumour_ids}" | parallel --jobs "$PARALLEL_JOBS" pcgr_annotation {}

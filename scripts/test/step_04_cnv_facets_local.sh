@@ -9,14 +9,13 @@
 ## Features:
 ##      1. Uses GNU Parallel for efficient processing of multiple samples
 ##      2. Reformat the output segment data
-##      3. Modified cnv_facets.R to include gene annotation for neutral segments
 ## "==========================================================================="
 
 ## Create the output directories
 mkdir -p "${CNV_FACETS_DIR}"
 
 export LOCAL_CNV_FACETS="${MODULE_DIR}/cnv_facets_modified.R"
-# export CNV_FACETS_DIR="${PROJECT_DIR}/data/DFSP/CNV_FACETS_test"
+export CNV_FACETS_DIR="${PROJECT_DIR}/data/DFSP/CNV_FACETS_test"
 
 ## Function to run CNV FACETS for a sample
 cnv_facets() {
@@ -32,7 +31,7 @@ cnv_facets() {
     # normal_id=DFSP-336-N
     
     ## Temporary output directory (WSL can not create makeinfo)
-    out_dir="${CNV_FACETS_DIR}/${tumour_id}"
+    out_dir="/tmp/cnv_facets/${tumour_id}"
     rm -rf "${out_dir}"
     mkdir -p "${out_dir}"
 
@@ -78,15 +77,14 @@ cnv_facets() {
                 >& "${prefix}.facets.log"
         
         ## Move the outputs to the work directory
-        # rm -rf "${CNV_FACETS_DIR}/${tumour_id}"
-        # cp -r "${out_dir}" "${CNV_FACETS_DIR}/"
-        # rm -rf "${out_dir}"
+        rm -rf "${CNV_FACETS_DIR}/${tumour_id}"
+        cp -r "${out_dir}" "${CNV_FACETS_DIR}/"
+        rm -rf "${out_dir}"
 
         ## Convert the VCF output to TSV format
         ## Without any filtering
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Converting VCF to TSV ..."
-        facets_segment="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.facets_segment.tsv"
-        facets_gene="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.facets_gene.tsv"
+        facet_tsv="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.tsv"
 
         singularity exec \
             --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
@@ -96,8 +94,7 @@ cnv_facets() {
             "${CONTAINER_DIR}/r.sif" \
             Rscript "${MODULE_DIR}/cnv_facets_convert_vcf_to_tsv.R" \
                 --input "${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.vcf.gz" \
-                --output_segment "${facets_segment}" \
-                --output_gene "${facets_gene}"
+                --output "${facet_tsv}"
 
         # Prepare the Copy number segments for pgcr input
         # Note: coordinates must be one-based; 
@@ -113,7 +110,7 @@ cnv_facets() {
             --bind /tmp:/tmp \
             "${CONTAINER_DIR}/r.sif" \
             Rscript "${MODULE_DIR}/cnv_facets_export_segments_to_pcgr.R" \
-                --input "${facets_segment}" \
+                --input "${facet_tsv}" \
                 --output "${pcgr_tsv}"
 
         ## Prepare the segments for GISTIC2 input
@@ -127,7 +124,7 @@ cnv_facets() {
             --bind /tmp:/tmp \
             "${CONTAINER_DIR}/r.sif" \
             Rscript "${MODULE_DIR}/cnv_facets_export_segments_to_gistic2.R" \
-                --input "${facets_segment}" \
+                --input "${facet_tsv}" \
                 --output "${gistic2_tsv}"
 
         ## Annotate the segments with gene information using bedtools
@@ -197,4 +194,6 @@ export -f cnv_facets
 ## Run FACETS for each tumour sample
 tumour_ids=$(find "${BAM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | grep "T" | sort)
 
-echo "${tumour_ids}" | parallel --jobs "$PARALLEL_JOBS" cnv_facets {}
+echo "${tumour_ids}" | parallel \
+    --jobs "$PARALLEL_JOBS" \
+    cnv_facets {}

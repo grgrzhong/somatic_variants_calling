@@ -11,7 +11,8 @@ singularity pull --force --dir "${CONTAINER_DIR}" bwa.sif oras://community.wave.
 singularity pull --force --dir "${CONTAINER_DIR}" cnv_facets.sif oras://community.wave.seqera.io/library/cnv_facets:0.16.1--279b2b94c5e037b9
 singularity pull --force --dir "${CONTAINER_DIR}" cnvkit.sif oras://community.wave.seqera.io/library/cnvkit:0.9.12--8f4ba584e385f393
 singularity pull --force --dir "${CONTAINER_DIR}" controlfreec.sif oras://community.wave.seqera.io/library/control-freec:11.6--b8904bfc98b3c9ba
-singularity pull --force --dir "${CONTAINER_DIR}" delly.sif oras://community.wave.seqera.io/library/delly:1.3.3--6a757953473b323c
+singularity pull --force --dir "${CONTAINER_DIR}" delly.sif oras://community.wave.seqera.io/library/delly:1.2.6--cf61e554738dd66b
+singularity pull --force --dir "${CONTAINER_DIR}" annotsv.sif oras://community.wave.seqera.io/library/annotsv:3.4.2--b6f91771f8f37a26
 singularity pull --force --dir "${CONTAINER_DIR}" ensemblvep.sif oras://community.wave.seqera.io/library/ensembl-vep:113.4--ca721b5ce97a9cdc
 singularity pull --force --dir "${CONTAINER_DIR}" fastp.sif oras://community.wave.seqera.io/library/fastp:0.24.0--0397de619771c7ae
 singularity pull --force --dir "${CONTAINER_DIR}" fastqc.sif oras://community.wave.seqera.io/library/fastqc:0.12.1--104d26ddd9519960
@@ -23,7 +24,12 @@ singularity pull --force --dir "${CONTAINER_DIR}" pysam.sif oras://community.wav
 singularity pull --force --dir "${CONTAINER_DIR}" samtools.sif oras://community.wave.seqera.io/library/samtools:1.21--84c9d77c3901e90b
 singularity pull --force --dir "${CONTAINER_DIR}" tabix.sif oras://community.wave.seqera.io/library/tabix:1.11--dba91ce963b95ef9
 singularity pull --force --dir "${CONTAINER_DIR}" vcf2tsvpy.sif oras://community.wave.seqera.io/library/vcf2tsvpy:0.6.1--234569ac32056c31
-singularity pull --force --dir "${CONTAINER_DIR}" pcgr.sif oras://ghcr.io/sigven/pcgr:2.2.1.singularity
+# singularity pull --name facets-suite-dev.img docker://philipjonsson/facets-suite:dev
+
+# singularity pull --force --dir "${CONTAINER_DIR}" pcgr.sif oras://ghcr.io/sigven/pcgr:2.2.1.singularity
+singularity pull --force --dir "${CONTAINER_DIR}" pcgr.sif oras://ghcr.io/sigven/pcgr:2.2.5.singularity
+
 singularity pull --force --dir "${CONTAINER_DIR}" r.sif oras://community.wave.seqera.io/library/r-base_r-fs_r-here_r-optparse_pruned:6d3c4357c207ae65
-
-
+singularity pull --force --dir "${CONTAINER_DIR}" vcf2maf.sif docker://cgrlab/vcf2maf
+# docker pull asntech/facets-suite:v2.0.8
+singularity pull --force --dir "${CONTAINER_DIR}" facets_suite_v2.0.8.sif docker://asntech/facets-suite:v2.0.8

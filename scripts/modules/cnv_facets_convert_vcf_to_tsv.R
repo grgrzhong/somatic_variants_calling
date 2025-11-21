@@ -15,17 +15,25 @@ suppressPackageStartupMessages(
 
 # Parse command line arguments
 option_list <- list(
-    make_option(c("-i", "--input"),
+    make_option(
+        c("-i", "--input"),
         type = "character", 
         default = NULL,
         help = "Input VCF file path", 
         metavar = "character"
     ),
     make_option(
-        c("-o", "--output"),
+        c("-s", "--output_segment"),
         type = "character", 
         default = NULL,
-        help = "Output TSV file path (required)", 
+        help = "Output segment TSV file path (required)", 
+        metavar = "character"
+    ),
+    make_option(
+        c("-g", "--output_gene"),
+        type = "character", 
+        default = NULL,
+        help = "Output gene TSV file path (required)", 
         metavar = "character"
     )
 )
@@ -42,8 +50,12 @@ if (is.null(opt$input)) {
     stop("Input VCF file must be specified with -i or --input")
 }
 
-if (is.null(opt$output)) {
-    stop("Output TSV file path must be specified with -o or --output")
+if (is.null(opt$output_segment)) {
+    stop("Output segment TSV file path must be specified with -s or --output_segment")
+}
+
+if (is.null(opt$output_gene)) {
+    stop("Output gene TSV file path must be specified with -g or --output_gene")
 }
 
 if (!file.exists(opt$input)) {
@@ -174,6 +186,12 @@ for (line in data_lines) {
         0
     }
 
+    CF_EM <- if ("CF_EM" %in% names(info_dict)) {
+        as.numeric(info_dict[["CF_EM"]])
+    } else {
+        NA
+    }
+
     # Create record with the required fields in the specified order
     record <- list(
         "CHROM" = CHROM,
@@ -181,7 +199,8 @@ for (line in data_lines) {
         "END" = END,
         "NUM_MARK" = NUM_MARK,
         "CNLR_MEDIAN" = CNLR_MEDIAN,
-        "SVTYPE" = SVTYPE
+        "SVTYPE" = SVTYPE,
+        "CF_EM" = CF_EM
     )
 
     # Add all other INFO fields
@@ -245,15 +264,29 @@ for (i in seq_along(records)) {
 final_cols <- intersect(col_order, names(df))
 
 # Apply column ordering
-df <- df[, final_cols]
+df <- df[, final_cols] |> as_tibble()
+# df |> 
+#     as_tibble() |> 
+#     filter(SVTYPE != "NEUTR") |> 
+#     view()
 
-# Write to output TSV file
-write.table(
+# Write to output segment TSV file
+write_tsv(
     df,
-    file = opt$output,
-    sep = "\t",
-    row.names = FALSE,
-    col.names = TRUE,
-    quote = FALSE
+    file = opt$output_segment,
+    col_names = TRUE
 )
 
+# Write to output gene TSV file
+df_gene <- df |> 
+    separate_longer_delim(
+        CNV_ANN,
+        delim = ","
+    ) |> 
+    relocate(CNV_ANN, .after = END)
+
+write_tsv(
+    df_gene,
+    file = opt$output_gene,
+    col_names = TRUE
+)

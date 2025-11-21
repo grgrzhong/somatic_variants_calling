@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=somatic_variants_calling
+#SBATCH --job-name=PureCN
 #SBATCH --partition=amd
-#SBATCH --time=72:00:00
+#SBATCH --time=6:00:00
 #SBATCH --qos=normal
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -33,6 +33,8 @@ export FASTA="${REFERENCE_DIR}/Gencode/gencode.hg38.v36.primary_assembly.fa"
 export INTERVAL="${REFERENCE_DIR}/Exome/xgen-exome-hyb-panel-v2-hg38_200bp_sorted_merged/xgen-exome-hyb-panel-v2-hg38_200bp_sorted_merged.bed"
 
 export PURECN_REF_DIR="${REFERENCE_DIR}/PureCN"
+mkdir -p $PURECN_REF_DIR
+
 export PURE_PATH="/usr/local/lib/R/site-library/PureCN/extdata"
 
 export PON_DIR="${REFERENCE_DIR}/PON-Mutect"
@@ -48,20 +50,22 @@ export PARALLEL_JOBS=20
 ## "=========================================================================="
 ## Step1: Generate reference files for PureCN
 ## "=========================================================================="
-# echo "$(date +"%F") $(date +"%T") - Generating reference files ..."
-# singularity exec \
-#     --bind ${PROJECT_DIR} \
-#     --bind ${REFERENCE_DIR} \
-#     ${CONTAINER_DIR}/purecn.sif \
-#     Rscript "${PURE_PATH}/IntervalFile.R" \
-#         --in-file ${INTERVAL} \
-#         --fasta ${FASTA} \
-#         --off-target \
-#         --genome hg38 \
-#         --force \
-#         --out-file $PURECN_REF_DIR/baits_hg38_intervals.txt \
-#         --export $PURECN_REF_DIR/baits_optimized_hg38.bed \
-#         >& ${PURECN_REF_DIR}/IntervalFile.log
+echo "$(date +"%F") $(date +"%T") - Generating reference files ..."
+
+## Remove the -off-target works, other wise the later step warnning no mathced reads
+singularity exec \
+    --bind ${PROJECT_DIR} \
+    --bind ${REFERENCE_DIR} \
+    ${CONTAINER_DIR}/purecn.sif \
+    Rscript "${PURE_PATH}/IntervalFile.R" \
+        --in-file ${INTERVAL} \
+        --fasta ${FASTA} \
+        --genome hg38 \
+        --force \
+        --out-file $PURECN_REF_DIR/baits_hg38_intervals.txt \
+        --export $PURECN_REF_DIR/baits_optimized_hg38.bed \
+        >& ${PURECN_REF_DIR}/IntervalFile.log
+        # --off-target \
 
 ## "=========================================================================="
 ## Step2: Calculate GC-normalized coverages:
@@ -109,8 +113,21 @@ echo "${sample_ids}" | parallel \
 
 echo "$(date +"%F") $(date +"%T") - Building normal database ..."
 
-find "${PURECN_DIR}" -name "*-N_coverage.txt.gz" > "${PURECN_REF_DIR}/normal_coverages.list"
+find "${PURECN_DIR}" -name "*-N_recalibrated_coverage.txt.gz" | cat > "${PURECN_REF_DIR}/normal_coverages.list"
 
+## Test VCF normal panel: not work
+# singularity exec \
+#     --bind ${PROJECT_DIR} \
+#     --bind ${REFERENCE_DIR} \
+#     ${CONTAINER_DIR}/purecn.sif \
+#     Rscript "$PURE_PATH/NormalDB.R" \
+#         --out-dir "${PURECN_REF_DIR}" \
+#         --coverage-files "${PURECN_REF_DIR}/normal_coverages.list" \
+#         --normal-panel "${PON}" \
+#         --genome hg38 \
+#         >& "${PURECN_REF_DIR}/NormalDB.log"
+
+## Test Mutect2/GATK4 normal panel GenomicsDB
 singularity exec \
     --bind ${PROJECT_DIR} \
     --bind ${REFERENCE_DIR} \
@@ -118,13 +135,15 @@ singularity exec \
     Rscript "$PURE_PATH/NormalDB.R" \
         --out-dir "${PURECN_REF_DIR}" \
         --coverage-files "${PURECN_REF_DIR}/normal_coverages.list" \
-        --normal-panel "${PON}" \
-        --genome hg38
+        --normal-panel "${PON_DIR}/pon_db" \
+        --genome hg38 \
+        --force \
+        >& "${PURECN_REF_DIR}/NormalDB.log"
 
 ## "=========================================================================="
 ## Step4: Run the main PureCN analysis for each tumor sample
 ## "=========================================================================="
-echo "$(date +"%F") $(date +"%T") - PureCN analysis ..."
+echo "$(date +"%F") $(date +"%T") - Running PureCN analysis ..."
 purecn_analysis() {
 
     local tumor_id=$1
@@ -137,12 +156,13 @@ purecn_analysis() {
         ${CONTAINER_DIR}/purecn.sif \
         Rscript "$PURE_PATH/PureCN.R" \
             --out "${PURECN_DIR}/${tumor_id}" \
-            --tumor "${PURECN_DIR}/${tumor_id}/${tumor_id}_coverage_loess.txt.gz" \
+            --tumor "${PURECN_DIR}/${tumor_id}/${tumor_id}_recalibrated_coverage_loess.txt.gz" \
             --sampleid "${tumor_id}" \
             --vcf "${MUTECT2_DIR}/${tumor_id}/${tumor_id}.mutect2.vcf.gz" \
-            --normaldb ${PURECN_REF_DIR}/normalDB_hg38.rds \
-            --intervals ${PURECN_REF_DIR}/baits_hg38_intervals.txt \
-            --genome hg38
+            --normaldb "${PURECN_REF_DIR}/normalDB_hg38.rds" \
+            --intervals "${PURECN_REF_DIR}/baits_hg38_intervals.txt" \
+            --genome hg38 \
+            >& "${PURECN_DIR}/${tumor_id}/PureCN.log"
 
 }
 
