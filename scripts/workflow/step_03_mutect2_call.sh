@@ -5,10 +5,12 @@
 ## Author:  Zhong Guorui
 #############################################################################
 
-# Create the output directories if they do not exist
+## Create the output directories if they do not exist
 mkdir -p "${MUTECT2_DIR}"
 
+## "==========================================================================="
 ## Function to run mutect2 and filtering
+## "==========================================================================="
 mutect2_call() {
     
     local tumour_id=$1
@@ -17,6 +19,11 @@ mutect2_call() {
     patient_id=$(echo "${tumour_id}" | cut -d'-' -f1,2)
     
     normal_id=${patient_id}-N
+
+    if [[ -f "${MUTECT2_DIR}/${tumour_id}/${tumour_id}.final.vcf.gz" ]]; then
+        echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Mutect2 calling already done. Skipping ..."
+        return 0
+    fi
 
     # Create output directory
     mkdir -p "${MUTECT2_DIR}/${tumour_id}"
@@ -303,14 +310,17 @@ mutect2_call() {
 
 }
 
-## Export function to make it available to GNU parallel
 export -f mutect2_call
 
+## "==========================================================================="
 ## Create header files needed for repeatmasker and blacklist annotation
+## "==========================================================================="
 echo -e "##INFO=<ID=RepeatMasker,Number=1,Type=String,Description=\"RepeatMasker\">" > "${MUTECT2_DIR}/vcf.rm.header"
 echo -e "##INFO=<ID=EncodeDacMapability,Number=1,Type=String,Description=\"EncodeDacMapability\">" > "${MUTECT2_DIR}/vcf.map.header"
 
-## tumour sample list
+## "==========================================================================="
+## Run mutect2 calling for each tumour sample
+## "==========================================================================="
 tumour_samples=$(find "${BAM_DIR}" -mindepth 1 -maxdepth 1 -type d -name "*T*" -print0 | xargs -0 -n 1 basename)
 
 echo "${tumour_samples}" | parallel --jobs "${PARALLEL_JOBS}" mutect2_call {}

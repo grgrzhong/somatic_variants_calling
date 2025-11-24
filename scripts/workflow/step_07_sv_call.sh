@@ -1,16 +1,4 @@
 #!/bin/bash
-#SBATCH --job-name=SomaticSV_call
-#SBATCH --partition=amd
-#SBATCH --time=12:00:00
-#SBATCH --qos=normal
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem-per-cpu=4G
-#SBATCH --output=/lustre1/g/path_my/pipeline/somatic_variants_calling/slurm/%x_%j.out
-#SBATCH --error=/lustre1/g/path_my/pipeline/somatic_variants_calling/slurm/%x_%j.err
-#SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=zhonggr@hku.hk
 
 ###############################################################################
 ## Somatic SV calling using Delly + Manta + AnnotSV
@@ -22,8 +10,6 @@ export EXCLUDE="${SOFTWARE_DIR}/delly/excludeTemplates/human.hg38.excl.tsv"
 
 export SAMTOOLS_PATH=/home/zhonggr/miniforge3/bin/samtools
 export ANNOTSV_PATH=${SOFTWARE_DIR}/AnnotSV
-
-# export SV_CALL_DIR=${PROJECT_DIR}/data/DFSP/SV-call
 
 ## "==========================================================================="
 ## Function to run SV calling for a single sample
@@ -262,12 +248,21 @@ run_somatic_sv() {
             tabix --preset vcf "${SV_CALL_DIR}/${tumour_id}/${tumour_id}.delly.manta.vcf.gz"
 
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) AnnotSV ..."
-        ${ANNOTSV_PATH}/bin/AnnotSV \
+        singularity exec \
+            --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
+            --bind "${SV_CALL_DIR}:${SV_CALL_DIR}" \
+            --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
+            --bind "${BAM_DIR}:${BAM_DIR}" \
+            --bind "${ANNOTSV_PATH}:${ANNOTSV_PATH}" \
+            --bind /tmp:/tmp \
+            "${CONTAINER_DIR}/annotsv.sif" \
+            AnnotSV \
             -SVinputFile "${SV_CALL_DIR}/${tumour_id}/${tumour_id}.delly.manta.vcf.gz" \
             -outputFile "${SV_CALL_DIR}/${tumour_id}/${tumour_id}.somaticSV.annotated.tsv" \
             -genomeBuild GRCh38 \
             -annotationMode both \
             -SVminSize 50 \
+            -annotationsDir "${ANNOTSV_PATH}/share/AnnotSV" \
             >& "${SV_CALL_DIR}/${tumour_id}/${tumour_id}.AnnotSV.log"
     fi
 
@@ -276,7 +271,7 @@ run_somatic_sv() {
 export -f run_somatic_sv
 
 ## "==========================================================================="
-## Run SV calling for all samples
+## Run SV calling for each sample
 ## "==========================================================================="
 tumour_ids=$(find "${BAM_DIR}" -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | grep "T" | sort)
 

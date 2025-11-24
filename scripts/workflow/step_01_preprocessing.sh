@@ -6,10 +6,12 @@
 ## This script performs adaptors trimming, and fastq quality control.
 #############################################################################
 
-# Create the output directories if they do not exist
+## Create the output directories if they do not exist
 mkdir -p "${FASTQ_TRIM_DIR}" "${FASTQC_TRIM_DIR}"
 
-# Function to process a single sample through fastp and BWA
+## "==========================================================================="
+## Function to process a single sample through fastp and BWA
+## "==========================================================================="
 preprocess() {
 
     local sample=$1
@@ -64,9 +66,11 @@ preprocess() {
         
 }
 
-# Export function to make it available to GNU parallel
 export -f preprocess
 
+## "==========================================================================="
+## Run preprocessing for each sample
+## "==========================================================================="
 # Get unique sample names from fastq files
 samples=$(find "${INPUT_DIR}" -name "*.fastq.gz" |
     sed 's/_[12]\.fastq\.gz$//' |

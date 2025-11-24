@@ -8,7 +8,9 @@
 # Create the output directories if they do not exist
 mkdir -p "${BAM_DIR}"
 
-# Function to process a single sample through fastp and BWA
+## "==========================================================================="
+## Function to process a single sample through fastp and BWA
+## "==========================================================================="
 bwa_mapping() {
 
     local sample=$1
@@ -30,8 +32,17 @@ bwa_mapping() {
     mkdir -p "${log_dir}"
     
     # BWA Alignment
-    echo "$(date +"%F") $(date +"%T") - (${sample}) BWA alignment ..."
     
+    # if the calibrated bam not exist, perform alignment and processing
+    if [[ -f "${BAM_DIR}/${sample}/${sample}_recalibrated.bam" ]]; then
+
+        echo "$(date +"%F") $(date +"%T") - (${sample}) Calibrated BAM already exists. Skipping BWA alignment and processing."
+
+        return 0
+    
+    fi
+    echo "$(date +"%F") $(date +"%T") - (${sample}) BWA alignment ..."
+
     bwa_log="${log_dir}/${sample}.bwa.log"
     
     singularity exec \
@@ -43,7 +54,7 @@ bwa_mapping() {
         "${CONTAINER_DIR}/bwa.sif" \
         bwa mem \
         -M \
-        -t 16 \
+        -t 8 \
         -R "@RG\tID:${sample}\tLB:XGenV2\tPL:ILLUMINA\tPM:NOVASEQ\tSM:${sample}\tPU:NA" \
         "${REFERENCE}" \
         "${fastq_1}" \
@@ -179,11 +190,14 @@ bwa_mapping() {
     rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam"
     rm -rf "${BAM_DIR}/${sample}/${sample}.marked.bam.bai"
     rm -rf "${BAM_DIR}/${sample}/${sample}_recalibrated.bam.md5"
+
 }
 
-# Export function to make it available to GNU parallel
 export -f bwa_mapping
 
+## "==========================================================================="
+## Run BWA mapping for each sample
+## "==========================================================================="
 # Get unique sample names from trimmed fastq files
 samples=$(find "${FASTQ_TRIM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 

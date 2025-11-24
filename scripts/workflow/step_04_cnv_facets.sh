@@ -18,7 +18,9 @@ mkdir -p "${CNV_FACETS_DIR}"
 export LOCAL_CNV_FACETS="${MODULE_DIR}/cnv_facets_modified.R"
 # export CNV_FACETS_DIR="${PROJECT_DIR}/data/DFSP/CNV_FACETS_test"
 
+## "==========================================================================="
 ## Function to run CNV FACETS for a sample
+## "==========================================================================="
 cnv_facets() {
     
     local tumour_id="$1"
@@ -29,17 +31,24 @@ cnv_facets() {
     ## Use matched normal or defined normal sample
     normal_id=${patient_id}-N
     
-    # normal_id=DFSP-336-N
-    
     ## Temporary output directory (WSL can not create makeinfo)
-    out_dir="${CNV_FACETS_DIR}/${tumour_id}"
-    rm -rf "${out_dir}"
-    mkdir -p "${out_dir}"
 
     # Check if presence of paired normal samples
     if [ -d "${BAM_DIR}/${normal_id}" ]; then
         
+        if [ -f "${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.vcf.gz" ]; then
+            echo "$(date +"%F") $(date +"%T") - (${tumour_id}) CNV FACETS already done. Skipping ..."
+            return 0
+        fi
+        
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Running CNV FACETS ..."
+        
+        ## "-----------------------------------------------------------------"
+        ## Run CNV FACETS
+        ## "-----------------------------------------------------------------"
+        out_dir="${CNV_FACETS_DIR}/${tumour_id}"
+        rm -rf "${out_dir}"
+        mkdir -p "${out_dir}"
         
         ## Check the bam files for tumour and normal samples
         tumour_bam="${BAM_DIR}/${tumour_id}/${tumour_id}_recalibrated.bam"
@@ -77,13 +86,16 @@ cnv_facets() {
                 --out "${prefix}" \
                 >& "${prefix}.facets.log"
         
-        ## Move the outputs to the work directory
-        # rm -rf "${CNV_FACETS_DIR}/${tumour_id}"
-        # cp -r "${out_dir}" "${CNV_FACETS_DIR}/"
-        # rm -rf "${out_dir}"
+        ## if it returns error, then skip following steps
+        if [ $? -ne 0 ]; then
+            echo "$(date +"%F") $(date +"%T") - (${tumour_id}) CNV FACETS failed. Skipping ..."
+            echo "${tumour_id}" >> "${CNV_FACETS_DIR}/cnv_facets_failed_samples.txt"
+            return 1
+        fi
 
-        ## Convert the VCF output to TSV format
-        ## Without any filtering
+        ## "-----------------------------------------------------------------"
+        ## Convert the VCF output to TSV format, Without any filtering
+        ## "-----------------------------------------------------------------"
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Converting VCF to TSV ..."
         facets_segment="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.facets_segment.tsv"
         facets_gene="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.facets_gene.tsv"
@@ -99,9 +111,11 @@ cnv_facets() {
                 --output_segment "${facets_segment}" \
                 --output_gene "${facets_gene}"
 
-        # Prepare the Copy number segments for pgcr input
-        # Note: coordinates must be one-based; 
-        # https://sigven.github.io/pcgr/articles/input.html
+        ## "-----------------------------------------------------------------"
+        ## Prepare the Copy number segments for pgcr input
+        ## Note: coordinates must be one-based; 
+        ## https://sigven.github.io/pcgr/articles/input.html
+        ## "-----------------------------------------------------------------"
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Exporting segments for PCGR input ..."
         
         pcgr_tsv="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.pcgr.tsv"
@@ -116,7 +130,9 @@ cnv_facets() {
                 --input "${facets_segment}" \
                 --output "${pcgr_tsv}"
 
+        ## "-----------------------------------------------------------------"
         ## Prepare the segments for GISTIC2 input
+        ## "-----------------------------------------------------------------"
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Exporting segments for GISTIC2 input ..."
         
         gistic2_tsv="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.gistic2.tsv"
@@ -130,71 +146,17 @@ cnv_facets() {
                 --input "${facets_segment}" \
                 --output "${gistic2_tsv}"
 
-        ## Annotate the segments with gene information using bedtools
-        ## Note: the coordinate must be 0-based
-        ## Not estimatable/Neutral segments were removed
-        # echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Annotating segments with using bedtools ..."
-
-        # ## Create the intermediate segment file
-        # seg_file="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.seg"
-
-        # singularity exec \
-        #     --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
-        #     --bind "${CNV_FACETS_DIR}:${CNV_FACETS_DIR}" \
-        #     --bind "${MODULE_DIR}:${MODULE_DIR}" \
-        #     --bind /tmp:/tmp \
-        #     "${CONTAINER_DIR}/r.sif" \
-        #     Rscript "${MODULE_DIR}/cnv_facets_export_tsv_to_bedtools.R" \
-        #         --input "${facet_tsv}" \
-        #         --output "${seg_file}"
-
-        # ## Annotate the segments with gene information
-        # seg_header_file="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.seg_header.txt"
-        # head -n 1 "${seg_file}" > "${seg_header_file}"
-
-        # ## Create the header for the annotation file
-        # annotation_header_file="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.annotation_header.txt"
-        # echo -e "Chr\tStart\tEnd\tGene" > "${annotation_header_file}"
-        
-        # ## Combine the headers
-        # header_file="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.header.txt"
-        # paste "${seg_header_file}" "${annotation_header_file}" > "${header_file}"
-
-        # ## Remove the header and convert to BED format
-        # bed_file="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.bed"
-        # tail -n +2 "${seg_file}" > "${bed_file}"
-        
-        # ## Run bedtools intersect using the converted BED file
-        # intersect_tsv="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.intersect.tsv"
-        
-        # singularity exec \
-        #     --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
-        #     --bind "${CNV_FACETS_DIR}:${CNV_FACETS_DIR}" \
-        #     --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
-        #     --bind "${MODULE_DIR}:${MODULE_DIR}" \
-        #     --bind /tmp:/tmp \
-        #     "${CONTAINER_DIR}/bedtools.sif" \
-        #     bedtools intersect \
-        #         -wa \
-        #         -wb \
-        #         -a "${bed_file}" \
-        #         -b "${ANNOTATION}" \
-        #         > "${intersect_tsv}"
-        
-        ## Create the final annotated file
-        # annotated_tsv="${CNV_FACETS_DIR}/${tumour_id}/${tumour_id}.annotated.tsv"
-        # cat "${header_file}" "${intersect_tsv}" > "${annotated_tsv}"
-        
-        ## Clean up intermediate files
-        # rm "${seg_file}" "${seg_header_file}" "${annotation_header_file}" 
-        # rm "${header_file}" "${bed_file}" "${intersect_tsv}"
-
     fi
 }
 
 export -f cnv_facets
 
+## "==========================================================================="
 ## Run FACETS for each tumour sample
+## "==========================================================================="
+## Clear previous failed samples log
+rm -f "${CNV_FACETS_DIR}/cnv_facets_failed_samples.txt"
+
 tumour_ids=$(find "${BAM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | grep "T" | sort)
 
 echo "${tumour_ids}" | parallel --jobs "$PARALLEL_JOBS" cnv_facets {}

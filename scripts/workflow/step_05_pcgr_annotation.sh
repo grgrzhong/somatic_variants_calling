@@ -41,7 +41,9 @@ fi
 # bcftools view -h "${PON_PCGR}" | grep -i "^#CHROM"
 # bcftools view -h "${PON}" | grep -i "^##"
 
+## "==========================================================================="
 ## Function to run PCGR annotation
+## "==========================================================================="
 pcgr_annotation() {
     
     local tumour_id=$1
@@ -203,9 +205,9 @@ pcgr_annotation() {
 
 export -f pcgr_annotation
 
+## "==========================================================================="
 ## Run PCGR annotation for each tumour samples
+## "==========================================================================="
 tumour_ids=$(find "${BAM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | grep "T" | sort)
-
-# export PARALLEL_JOBS=20
 
 echo "${tumour_ids}" | parallel --jobs "$PARALLEL_JOBS" pcgr_annotation {}
