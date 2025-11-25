@@ -203,3 +203,14 @@ samples=$(find "${FASTQ_TRIM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n
 
 # Process samples in parallel
 echo "$samples" | parallel --jobs "$PARALLEL_JOBS" bwa_mapping {}
+
+## "==========================================================================="
+## Extract and combine HS metrics information
+## "==========================================================================="
+find ${BAM_DIR}/*/ -type f -name "*_hs_metrics.txt" | while read file; do awk 'NR==8 {print FILENAME "\t" $0}' "$file"; done | awk -F '/' '{print $(NF-1), $0}' OFS='\t' | cut -f 1,3- > ${BAM_DIR}/HS_info.txt
+
+head $(ls -d ${BAM_DIR}/*/*_hs_metrics.txt | head -n 1) -n 7 | tail -n 1 > ${BAM_DIR}/heading.txt
+
+cat ${BAM_DIR}/heading.txt ${BAM_DIR}/HS_info.txt | awk 'NR==1 {print "Sample.ID\t" $0; next} 1'> ${BAM_DIR}/HS_combined.txt
+rm -rf ${BAM_DIR}/HS_info.txt
+rm -rf ${BAM_DIR}/heading.txt

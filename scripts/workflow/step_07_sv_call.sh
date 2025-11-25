@@ -39,6 +39,9 @@ run_somatic_sv() {
 
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Delly Calling ..."
         
+        rm -rf "${SV_CALL_DIR}/${tumour_id}"
+        mkdir -p "${SV_CALL_DIR}/${tumour_id}"
+
         delly_dir="${SV_CALL_DIR}/${tumour_id}/Delly"
         rm -rf "${delly_dir}"
         mkdir -p "${delly_dir}"
@@ -131,11 +134,10 @@ run_somatic_sv() {
             --bind "${SV_CALL_DIR}:${SV_CALL_DIR}" \
             --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
             --bind "${BAM_DIR}:${BAM_DIR}" \
-            --bind "${SAMTOOLS_PATH}:${SAMTOOLS_PATH}" \
             --bind /tmp:/tmp \
             "${CONTAINER_DIR}/manta.sif" \
             python2 /opt/conda/libexec/convertInversion.py \
-                "${SAMTOOLS_PATH}" \
+                /opt/conda/libexec/samtools \
                 "$REFERENCE" \
                 "$manta_dir/results/variants/somaticSV.vcf.gz" \
                 >& "${manta_dir}/${tumour_id}.manta.convert.log"
@@ -150,22 +152,14 @@ run_somatic_sv() {
             tabix -f --preset vcf "$manta_dir/results/variants/somaticSV.vcf.gz"
 
         ## Reorganize outputs
-        mv ${manta_dir}/results/variants/candidateSmallIndels.vcf.gz \
-        ${manta_dir}/${tumour_id}.candidateSmallIndels.vcf.gz
-        mv ${manta_dir}/results/variants/candidateSmallIndels.vcf.gz.tbi \
-        ${manta_dir}/${tumour_id}.candidateSmallIndels.vcf.gz.tbi
-        mv ${manta_dir}/results/variants/candidateSV.vcf.gz \
-        ${manta_dir}/${tumour_id}.candidateSV.vcf.gz
-        mv ${manta_dir}/results/variants/candidateSV.vcf.gz.tbi \
-        ${manta_dir}/${tumour_id}.candidateSV.vcf.gz.tbi
-        mv ${manta_dir}/results/variants/diploidSV.vcf.gz \
-        ${manta_dir}/${tumour_id}.diploidSV.vcf.gz
-        mv ${manta_dir}/results/variants/diploidSV.vcf.gz.tbi \
-        ${manta_dir}/${tumour_id}.diploidSV.vcf.gz.tbi
-        mv ${manta_dir}/results/variants/somaticSV.vcf.gz \
-        ${manta_dir}/${tumour_id}.somaticSV.manta.vcf.gz
-        mv ${manta_dir}/results/variants/somaticSV.vcf.gz.tbi \
-        ${manta_dir}/${tumour_id}.somaticSV.manta.vcf.gz.tbi
+        mv ${manta_dir}/results/variants/candidateSmallIndels.vcf.gz ${manta_dir}/${tumour_id}.candidateSmallIndels.vcf.gz
+        mv ${manta_dir}/results/variants/candidateSmallIndels.vcf.gz.tbi ${manta_dir}/${tumour_id}.candidateSmallIndels.vcf.gz.tbi
+        mv ${manta_dir}/results/variants/candidateSV.vcf.gz ${manta_dir}/${tumour_id}.candidateSV.vcf.gz
+        mv ${manta_dir}/results/variants/candidateSV.vcf.gz.tbi ${manta_dir}/${tumour_id}.candidateSV.vcf.gz.tbi
+        mv ${manta_dir}/results/variants/diploidSV.vcf.gz ${manta_dir}/${tumour_id}.diploidSV.vcf.gz
+        mv ${manta_dir}/results/variants/diploidSV.vcf.gz.tbi ${manta_dir}/${tumour_id}.diploidSV.vcf.gz.tbi
+        mv ${manta_dir}/results/variants/somaticSV.vcf.gz ${manta_dir}/${tumour_id}.somaticSV.manta.vcf.gz
+        mv ${manta_dir}/results/variants/somaticSV.vcf.gz.tbi ${manta_dir}/${tumour_id}.somaticSV.manta.vcf.gz.tbi
 
         ## Merge outputs from Delly and Manta
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) Merging Delly and Manta outputs ..."

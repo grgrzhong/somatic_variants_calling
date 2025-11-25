@@ -11,7 +11,15 @@
 
 ## Create the output directory
 mkdir -p "${PCGR_DIR}"
-export COPY_GAIN_THRESHOLD=3
+
+## PCGR init filtering
+export TUMOR_DP_MIN=20
+export TUMOR_AF_MIN=0.05
+export CONTROL_DP_MIN=10
+export CONTROL_AF_MAX=0.01
+export TMB_DP_MIN=20
+export TMB_AF_MIN=0.05
+export N_COPY_GAIN=3
 
 ## ===========================================================================
 ## General configurations
@@ -118,19 +126,19 @@ pcgr_annotation() {
             --genome_assembly grch38 \
             --sample_id "${tumour_id}" \
             --assay WES \
-            --n_copy_gain "${COPY_GAIN_THRESHOLD}" \
+            --n_copy_gain "${N_COPY_GAIN}" \
             --effective_target_size_mb 34 \
             --tumor_dp_tag TDP \
             --tumor_af_tag TAF \
             --control_dp_tag NDP \
             --control_af_tag NAF \
-            --tumor_dp_min 20 \
-            --tumor_af_min 0.05 \
-            --control_dp_min 10 \
-            --control_af_max 0.01 \
+            --tumor_dp_min "${TUMOR_DP_MIN}" \
+            --tumor_af_min "${TUMOR_AF_MIN}" \
+            --control_dp_min "${CONTROL_DP_MIN}" \
+            --control_af_max "${CONTROL_AF_MAX}" \
             --estimate_tmb \
-            --tmb_dp_min 20 \
-            --tmb_af_min 0.05 \
+            --tmb_dp_min "${TMB_DP_MIN}" \
+            --tmb_af_min "${TMB_AF_MIN}" \
             --estimate_msi \
             --estimate_signatures \
             --vcf2maf \
@@ -183,16 +191,16 @@ pcgr_annotation() {
                 --genome_assembly grch38 \
                 --sample_id "${tumour_id}" \
                 --assay WES \
-                --n_copy_gain "${COPY_GAIN_THRESHOLD}" \
+                --n_copy_gain "${N_COPY_GAIN}" \
                 --effective_target_size_mb 34 \
                 --tumor_only \
                 --tumor_dp_tag TDP \
                 --tumor_af_tag TAF \
-                --tumor_dp_min 20 \
-                --tumor_af_min 0.05 \
+                --tumor_dp_min "${TUMOR_DP_MIN}" \
+                --tumor_af_min "${TUMOR_AF_MIN}" \
                 --estimate_tmb \
-                --tmb_dp_min 20 \
-                --tmb_af_min 0.05 \
+                --tmb_dp_min "${TMB_DP_MIN}" \
+                --tmb_af_min "${TMB_AF_MIN}" \
                 --estimate_msi \
                 --estimate_signatures \
                 --vcf2maf \

@@ -12,64 +12,68 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=zhonggr@hku.hk
 
-# Determine the script directory - works both locally and on SLURM
-if [[ -n "${SLURM_JOB_ID:-}" ]]; then
-    # Running on SLURM - use the submit directory
-    PIPELINE_DIR="${SLURM_SUBMIT_DIR}"
-else
-    # Running locally - use the directory containing this script
-    PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-fi
-
-# Load configuration
-source "${PIPELINE_DIR}/conf/config.sh" "$@"
-
 ## Create the environment
-# conda create -n facets bioconda::r-facets bioconda::snp-pileup r-devtools htslib=1.3.1
+# conda create -n facets2n snp-pileup r-devtools r-optparse r-parallel
 
-# export DBSNP="${REFERENCE_DIR}/Population_database/dbSNP.vcf.gz"
+export PROJECT_DIR="/lustre1/g/path_my/pipeline/somatic_variants_calling"
+export MODULE_DIR="${PROJECT_DIR}/scripts/modules"
+export REFERENCE_DIR="/lustre1/g/path_my/Reference"
+export DBSNP="${REFERENCE_DIR}/Population_database/dbSNP.vcf.gz"
+
 # export DBSNP="${REFERENCE_DIR}/FACETS/facets_reference_snps_hg38_uniform_1kb.chr_style.vcf.gz"
-export DBSNP="${REFERENCE_DIR}/Population_database/00-common_all.vcf.gz"
+# export DBSNP="${REFERENCE_DIR}/Population_database/00-common_all.vcf.gz"
 export BAM_DIR="${PROJECT_DIR}/data/DFSP/BAM"
 export FACETS2N_DIR="${PROJECT_DIR}/data/DFSP/FACETS2N"
 mkdir -p "${FACETS2N_DIR}"
 
 ## "==========================================================================="
-## Generate the reference snp-pileup
+## Reference snp-pileup
 ## "==========================================================================="
-reference_normals_dir="${FACETS2N_DIR}/reference_normals"
-mkdir -p "${reference_normals_dir}"
-export SNP_PILEUP="${HOME}/miniforge3/envs/facets/bin/snp-pileup"
+export FACETS2N_REFERENCE_DIR="${FACETS2N_DIR}/reference_normals"
+mkdir -p "${FACETS2N_REFERENCE_DIR}"
 
-# export snp_pileup_path="${HOME}/miniforge3/envs/snp-pileup/bin/snp-pileup"
-normal_bams=$(find "${BAM_DIR}" -type f -name "*-N*_recalibrated.bam" | tr '\n' ' ')
+echo "$(date +"%F") $(date +"%T") - Reference normals snp-pileup ..."
 
-# Check if snp-pileup exists
-if [ ! -f "${snp_pileup_path}" ]; then
-    echo "Error: snp-pileup not found at ${snp_pileup_path}"
-    exit 1
-fi
-
-# Check if any normal BAMs were found
-if [ -z "$normal_bams" ]; then
-    echo "Error: No normal BAM files found"
-    exit 1
-fi
-
-export PATH="${HOME}/htslib/bin:${PATH}"
-export LD_LIBRARY_PATH="${HOME}/htslib-1.22.1/lib:${LD_LIBRARY_PATH}"
-export C_INCLUDE_PATH="${HOME}/htslib-1.22.1/include:${C_INCLUDE_PATH}"
-export CPLUS_INCLUDE_PATH="${HOME}/htslib-1.22.1/include:${CPLUS_INCLUDE_PATH}"
-
-    # --snp-pileup-path "${snp_pileup_path}" \
-Rscript ./scripts/facets2n/inst/extcode/snp-pileup-wrapper.R \
-    --output-prefix "${reference_normals_dir}/reference_normals" \
+Rscript ${MODULE_DIR}/facets2n_snp-pileup-wrapper.R \
+    --output-prefix "${FACETS2N_REFERENCE_DIR}/reference_normals" \
     --vcf-file "${DBSNP}" \
-    --unmatched-normal-BAMS "${normal_bams}"
-
+    --unmatched-normal-BAMS "${BAM_DIR}/*/*-N_recalibrated.bam"
 
 ## "==========================================================================="
-## Generate the reference snp-pileup
+## Reference loess normalization
+## "==========================================================================="
+echo "$(date +"%F") $(date +"%T") - Reference loess normalization ..."
+
+Rscript - << 'EOF'
+library(facets2n)
+
+## Input and output files
+pileup_file <- Sys.getenv("FACETS2N_REFERENCE_DIR")
+pileup_file <- file.path(pileup_file, "reference_normals.snp_pileup.gz")
+loess_file <- file.path(dirname(pileup_file), "reference_normals.loess.txt")
+
+## Check if pileup file exists
+if (!file.exists(pileup_file)) {
+    stop(paste("Error: Pileup file not found:", pileup_file))
+}
+
+## Preprocess the snp-pileup file
+pileup <- PreProcessSnpPileup(
+    filename = pileup_file,
+    is.Reference = TRUE
+)
+
+## Generate loess object
+MakeLoessObject(
+    pileup = pileup,
+    write.loess = TRUE,
+    outfilepath = loess_file,
+    is_Reference = TRUE
+)
+EOF
+
+## "==========================================================================="
+## Generate the counts file
 ## "==========================================================================="
 run_facets() {
 
@@ -98,26 +102,19 @@ run_facets() {
         fi
 
         ## Create output directory for the sample
-        sample_facets_dir="${FACETS_DIR}/${tumour_id}"
-        rm -rf "${sample_facets_dir}"
-        mkdir -p "${sample_facets_dir}"
+        out_dir="${FACETS2N_DIR}/${tumour_id}"
+        rm -rf "${out_dir}"
+        mkdir -p "${out_dir}"
 
-        echo "$(date +"%F") $(date +"%T") - (${tumour_id}) - snp-pileup ..."
+        echo "$(date +"%F") $(date +"%T") - (${tumour_id}) - Generating counts file ..."
         ## Run FACETS snp-pileup
-        singularity run \
-                --bind "${PROJECT_DIR}:${PROJECT_DIR}" \
-                --bind "${REFERENCE_DIR}:${REFERENCE_DIR}" \
-                --bind "${FACETS_DIR}:${FACETS_DIR}" \
-                --bind "${BAM_DIR}:${BAM_DIR}" \
-                --bind /tmp:/tmp \
-                "${CONTAINER_DIR}/facets-suite-dev.img" \
-                snp-pileup-wrapper.R \
-                    --vcf-file "${DBSNP}" \
-                    --normal-bam "${normal_bam}" \
-                    --tumor-bam "${tumour_bam}" \
-                    --verbose \
-                    --output-prefix "${sample_facets_dir}/${tumour_id}" \
-                    >& "${sample_facets_dir}/${tumour_id}.snp_pileup.log"
+        Rscript ${MODULE_DIR}/facets2n_snp-pileup-wrapper.R \
+            --vcf-file "${DBSNP}" \
+            --normal-bam "${normal_bam}" \
+            --tumor-bam "${tumour_bam}" \
+            --unma
+            --output-prefix "${out_dir}/${tumour_id}" \
+            >& "${out_dir}/${tumour_id}.snp_pileup.log"
 
         ## FACETS wrapper
         echo "$(date +"%F") $(date +"%T") - (${tumour_id}) - run-facets ..."
