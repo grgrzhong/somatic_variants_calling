@@ -15,8 +15,10 @@ mkdir -p "${PCGR_DIR}"
 ## PCGR init filtering
 export TUMOR_DP_MIN=20
 export TUMOR_AF_MIN=0.05
-export CONTROL_DP_MIN=10
-export CONTROL_AF_MAX=0.01
+export CONTROL_DP_MIN=None
+export CONTROL_AF_MAX=None
+# export CONTROL_DP_MIN=10
+# export CONTROL_AF_MAX=0.01
 export TMB_DP_MIN=20
 export TMB_AF_MIN=0.05
 export N_COPY_GAIN=3
@@ -134,8 +136,6 @@ pcgr_annotation() {
             --control_af_tag NAF \
             --tumor_dp_min "${TUMOR_DP_MIN}" \
             --tumor_af_min "${TUMOR_AF_MIN}" \
-            --control_dp_min "${CONTROL_DP_MIN}" \
-            --control_af_max "${CONTROL_AF_MAX}" \
             --estimate_tmb \
             --tmb_dp_min "${TMB_DP_MIN}" \
             --tmb_af_min "${TMB_AF_MIN}" \

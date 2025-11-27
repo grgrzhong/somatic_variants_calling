@@ -1,8 +1,0 @@
-#!/bin/bash
-
-./somatic_calling_pipeline.sh \
-    /mnt/f/pipeline/somatic_variants_calling/data/test_data/Raw \
-    /mnt/f/pipeline/somatic_variants_calling/data/test_data \
-    3 \
-    /mnt/f/Reference \
-    /mnt/f/Software
