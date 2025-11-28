@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=Somatic_Call_GLI1
 #SBATCH --partition=amd
-#SBATCH --time=72:00:00
+#SBATCH --time=48:00:00
 #SBATCH --qos=normal
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=/lustre1/g/path_my/pipeline/somatic_variants_calling/slurm/%x_%j.out
 #SBATCH --error=/lustre1/g/path_my/pipeline/somatic_variants_calling/slurm/%x_%j.err
@@ -48,23 +48,23 @@ echo "======================================================================="
 echo "Somatic variants calling Workflow - Pipeline"
 echo "======================================================================="
 
-## Step 1: Preprocessing
-echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC ..."
-bash "${PROJECT_DIR}/scripts/workflow/step_01_preprocessing.sh"
-if [ $? -ne 0 ]; then
-    echo "✗ Error: Preprocessing steps failed. Exiting pipeline."
-    exit 1
-fi
-echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC (✓) "
+# ## Step 1: Preprocessing
+# echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC ..."
+# bash "${PROJECT_DIR}/scripts/workflow/step_01_preprocessing.sh"
+# if [ $? -ne 0 ]; then
+#     echo "✗ Error: Preprocessing steps failed. Exiting pipeline."
+#     exit 1
+# fi
+# echo "$(date +"%F") $(date +"%T") Step 1: Preprocessing and QC (✓) "
 
-## Step 2: BWA alignment
-echo "$(date +"%F") $(date +"%T") Step 2: BWA-mem alignment ..."
-bash "${PROJECT_DIR}/scripts/workflow/step_02_bwa_alignment.sh"
-if [ $? -ne 0 ]; then
-    echo "✗ Error: BWA alignment steps failed. Exiting pipeline."
-    exit 1
-fi
-echo "$(date +"%F") $(date +"%T") Step 2: BWA alignment (✓) "
+# ## Step 2: BWA alignment
+# echo "$(date +"%F") $(date +"%T") Step 2: BWA-mem alignment ..."
+# bash "${PROJECT_DIR}/scripts/workflow/step_02_bwa_alignment.sh"
+# if [ $? -ne 0 ]; then
+#     echo "✗ Error: BWA alignment steps failed. Exiting pipeline."
+#     exit 1
+# fi
+# echo "$(date +"%F") $(date +"%T") Step 2: BWA alignment (✓) "
 
 ## Step 3: Mutect2 call
 echo "$(date +"%F") $(date +"%T") Step 3: Mutect2 calling ..."

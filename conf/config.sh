@@ -11,9 +11,6 @@
 # source $(conda info --base)/etc/profile.d/conda.sh
 # conda activate apptainer
 
-# Exit on any error
-# set -e
-
 # Set project directory relative to this script
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PROJECT_DIR

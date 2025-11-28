@@ -3,7 +3,7 @@
 sbatch ./somatic_calling_pipeline.sh \
     /lustre1/g/path_my/pipeline/somatic_variants_calling/data/GLI1/Raw \
     /lustre1/g/path_my/pipeline/somatic_variants_calling/data/GLI1 \
-    6 \
+    7 \
     /lustre1/g/path_my/Reference \
     /lustre1/g/path_my/Software
 
