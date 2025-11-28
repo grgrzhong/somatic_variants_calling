@@ -1,11 +1,18 @@
 #!/bin/bash
 
 sbatch ./somatic_calling_pipeline.sh \
-    /lustre1/g/path_my/pipeline/somatic_variants_calling/data/GLI1/Raw \
-    /lustre1/g/path_my/pipeline/somatic_variants_calling/data/GLI1 \
-    7 \
+    /lustre1/g/path_my/pipeline/somatic_variants_calling/data/SARC/Raw \
+    /lustre1/g/path_my/pipeline/somatic_variants_calling/data/SARC \
+    20 \
     /lustre1/g/path_my/Reference \
     /lustre1/g/path_my/Software
+
+# sbatch ./somatic_calling_pipeline.sh \
+#     /lustre1/g/path_my/pipeline/somatic_variants_calling/data/GLI1/Raw \
+#     /lustre1/g/path_my/pipeline/somatic_variants_calling/data/GLI1 \
+#     7 \
+#     /lustre1/g/path_my/Reference \
+#     /lustre1/g/path_my/Software
 
 # sbatch ./somatic_calling_pipeline.sh \
 #     /lustre1/g/path_my/pipeline/somatic_variants_calling/data/BLMS/Raw \

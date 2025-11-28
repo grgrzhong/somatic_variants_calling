@@ -47,6 +47,6 @@ export -f annovar_annotation
 ## "==========================================================================="
 ## Run Annovar annotation for all samples
 ## "==========================================================================="
-tumour_ids=$(find "${BAM_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | grep "T" | sort)
+tumour_ids=$(find "${MUTECT2_DIR}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | grep "T" | sort)
 
 echo "${tumour_ids}" | parallel --jobs "$PARALLEL_JOBS" annovar_annotation {}
