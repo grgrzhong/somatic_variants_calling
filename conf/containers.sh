@@ -24,6 +24,8 @@ singularity pull --force --dir "${CONTAINER_DIR}" pysam.sif oras://community.wav
 singularity pull --force --dir "${CONTAINER_DIR}" samtools.sif oras://community.wave.seqera.io/library/samtools:1.21--84c9d77c3901e90b
 singularity pull --force --dir "${CONTAINER_DIR}" tabix.sif oras://community.wave.seqera.io/library/tabix:1.11--dba91ce963b95ef9
 singularity pull --force --dir "${CONTAINER_DIR}" vcf2tsvpy.sif oras://community.wave.seqera.io/library/vcf2tsvpy:0.6.1--234569ac32056c31
+singularity pull --force --dir "${CONTAINER_DIR}" manta_strelka.sif oras://community.wave.seqera.io/library/manta_strelka:6477002e66b275d8
+singularity pull --force --dir "${CONTAINER_DIR}" strelka.sif oras://community.wave.seqera.io/library/strelka:2.9.10--a0724eb3421a65ee
 # singularity pull --name facets-suite-dev.img docker://philipjonsson/facets-suite:dev
 
 # singularity pull --force --dir "${CONTAINER_DIR}" pcgr.sif oras://ghcr.io/sigven/pcgr:2.2.1.singularity
