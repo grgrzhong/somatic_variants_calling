@@ -15,8 +15,6 @@ mkdir -p "${PCGR_DIR}"
 ## PCGR init filtering
 export TUMOR_DP_MIN=20
 export TUMOR_AF_MIN=0.05
-export CONTROL_DP_MIN=None
-export CONTROL_AF_MAX=None
 # export CONTROL_DP_MIN=10
 # export CONTROL_AF_MAX=0.01
 export TMB_DP_MIN=20
