@@ -23,7 +23,6 @@ conda install apptainer parallel
 ## Make the pipeline scripts executable
 chmod +x somatic_calling_pipeline.sh
 chmod +x run_pipeline_hpc.sh
-chmod +x run_pipeline_local.sh
 ```
 
 ## Input
@@ -48,7 +47,7 @@ The pipeline expects paired-end FASTQ files following this pattern:
 
 ## Output
 
-The pipeline generates the following output structure:
+Example of outputs generated using this pipeline
 
 ```
 ├── Annovar
@@ -88,7 +87,7 @@ The pipeline generates the following output structure:
 ## Quick start
 
 ```bash
-# Custom parameters
+## Custom parameters locally
 ./somatic_calling_pipeline.sh \
     /lustre1/g/path_my/pipeline/somatic_variants_calling/data/test_data/Raw \
     /lustre1/g/path_my/pipeline/somatic_variants_calling/data/test_data \
@@ -96,10 +95,8 @@ The pipeline generates the following output structure:
     /lustre1/g/path_my/Reference \
     /lustre1/g/path_my/Software
 ```
-```bash
-# Submit to SLURM scheduler
-./run_pipeline_hpc.sh
 
-# Or submit directly
-sbatch rnafusion_pipeline.sh
+```bash
+## Submit to SLURM scheduler
+./run_pipeline_hpc.sh
 ```
