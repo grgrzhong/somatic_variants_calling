@@ -35,13 +35,13 @@ mkdir -p "${STRELKA_DIR}"
 PCGR_REFERENCE="${REFERENCE_DIR}/PCGR_reference/20250314"
 VEP_CACHE="${REFERENCE_DIR}/VEP_cache"
 
-export TUMOR_DP_MIN=20
-export TUMOR_AF_MIN=0.05
+# export TUMOR_DP_MIN=20
+# export TUMOR_AF_MIN=0.05
 # export CONTROL_DP_MIN=10
 # export CONTROL_AF_MAX=0.01
-export TMB_DP_MIN=20
-export TMB_AF_MIN=0.05
-export N_COPY_GAIN=3
+# export TMB_DP_MIN=20
+# export TMB_AF_MIN=0.05
+# export N_COPY_GAIN=3
 
 ## "==========================================================================="
 ## Function to run strelka for a sample
